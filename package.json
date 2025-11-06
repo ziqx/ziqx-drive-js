@@ -1,0 +1,27 @@
+{
+  "name": "@ziqx/drive",
+  "version": "0.0.2",
+  "description": "SDK for Ziqx Drive upload and sign URL",
+  "main": "./dist/index.ts",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "homepage": "ziqx.cc",
+  "access": "public",
+  "repository": {
+    "url": "https://github.com/ziqx/ziqx-drive-js"
+  },
+  "scripts": {
+    "build": "tsup"
+  },
+  "keywords": [
+    "drive",
+    "ziqx drive",
+    "ziqx.js"
+  ],
+  "author": "Fathah KA",
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.5"
+  }
+}
