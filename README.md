@@ -85,6 +85,13 @@ fileInput.addEventListener("change", async () => {
 });
 ```
 
+### Compress Image
+
+```ts
+const client = new ZDriveClient();
+const resizedImage = await client.resizeImage(file);
+```
+
 ---
 
 ## API
