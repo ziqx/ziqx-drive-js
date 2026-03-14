@@ -145,6 +145,14 @@ interface UploadResponse {
 
 ---
 
+## AI Agent Skills
+
+If you are using an AI agent, you can add `ziqx-drive-js` related skills to your agent using the following command:
+
+```bash
+npx skills add ziqx/ziqx-ai-skills
+```
+
 ## License
 
 MIT © [ZIQX](https://ziqx.cc)
