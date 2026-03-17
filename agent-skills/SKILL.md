@@ -33,7 +33,8 @@ To allow a client to upload a file directly to Ziqx Drive, you must first genera
 #### API Reference: `ZDrive`
 
 - `constructor(driveKey: string, driveSecret: string)`
-- `generatePutUrl(fileName: string): Promise<SignUrlResponse>`
+- `generatePutUrl(fileName: string, folder?: string): Promise<SignUrlResponse>`
+- `deleteFile(fileName: string, folder?: string): Promise<any>`
 
 #### Logic Flow
 
@@ -78,11 +79,11 @@ import { ZDrive } from "@ziqx/drive";
  * Generates a signed upload URL for Ziqx Drive.
  * This should ALWAYS be called from the server to protect credentials.
  */
-export async function generateSignedUrl(fileName: string) {
+export async function generateSignedUrl(fileName: string, folder?: string) {
   // Initialize with drive credentials from environment variables
   const drive = new ZDrive(ENV.ZDRIVE_KEY!, ENV.ZDRIVE_SECRET!);
 
-  const signed = await drive.generatePutUrl(fileName);
+  const signed = await drive.generatePutUrl(fileName, folder);
 
   if (signed.success && signed.url) {
     return signed.url;
@@ -90,6 +91,14 @@ export async function generateSignedUrl(fileName: string) {
     console.error("❌ Error generating URL:", signed.message);
     return null;
   }
+}
+
+/**
+ * Deletes a file from Ziqx Drive.
+ */
+export async function deleteFromDrive(fileName: string, folder?: string) {
+  const drive = new ZDrive(ENV.ZDRIVE_KEY!, ENV.ZDRIVE_SECRET!);
+  return await drive.deleteFile(fileName, folder);
 }
 ```
 
@@ -139,6 +148,7 @@ const handleUpload = async (options: any) => {
 3.  **File Naming**: When generating a signed URL, ensure the filename passed to `generatePutUrl` matches or is appropriate for the file being uploaded.
 4.  **Error Handling**: Always check for `signed.success` on the server and `uploadRes.success` on the client.
 5.  **Image Optimization**: If the user is uploading images, suggest using `client.resizeImage(file, 1024, 0.8)` before calling `uploadFile` to save bandwidth and storage.
+6.  **Folder Organization**: Encourage using the `folder` parameter to organize files (e.g., `users/123/avatars`) for better storage management.
 
 ---
 

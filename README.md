@@ -8,7 +8,8 @@
 
 ## Features
 
-- Generate signed URLs for secure file uploads (server-side)
+- Generate signed URLs for secure file uploads & deletions (server-side)
+- Support for folders/paths in uploads and deletions
 - Upload files directly from the browser using signed URLs
 - Written in **TypeScript** with full type safety
 - Easy integration with **React**, **Next.js**, or any Node.js backend
@@ -38,14 +39,18 @@ async function generateSignedUrl() {
   // Initialize with your Drive credentials
   const drive = new ZDrive("your-drive-key", "your-drive-secret");
 
-  // Generate signed URL for a file
-  const signed = await drive.generatePutUrl("example.jpg");
+  // Generate signed URL for a file (can specify an optional folder)
+  const signed = await drive.generatePutUrl("example.jpg", "vacation/2024");
 
   if (signed.success && signed.url) {
     console.log("✅ Signed URL:", signed.url);
   } else {
     console.error("❌ Error generating URL:", signed.message);
   }
+
+  // Delete a file
+  const deleted = await drive.deleteFile("example.jpg", "vacation/2024");
+  console.log("Deleted:", deleted);
 }
 
 generateSignedUrl();
@@ -98,9 +103,10 @@ const resizedImage = await client.resizeImage(file);
 
 ### `ZDrive`
 
-| Method                             | Description                       | Parameters                    | Returns                    |
-| ---------------------------------- | --------------------------------- | ----------------------------- | -------------------------- |
-| `generatePutUrl(fileName: string)` | Generates a signed URL for a file | `fileName` — Name of the file | `Promise<SignUrlResponse>` |
+| Method                                              | Description                       | Parameters                                    | Returns                    |
+| --------------------------------------------------- | --------------------------------- | --------------------------------------------- | -------------------------- |
+| `generatePutUrl(fileName: string, folder?: string)` | Generates a signed URL for a file | `fileName`: Name<br>`folder`: Path (Optional) | `Promise<SignUrlResponse>` |
+| `deleteFile(fileName: string, folder?: string)`     | Deletes a file from Ziqx Drive    | `fileName`: Name<br>`folder`: Path (Optional) | `Promise<UploadResponse>`  |
 
 ---
 

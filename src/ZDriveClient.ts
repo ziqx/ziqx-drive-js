@@ -1,19 +1,4 @@
-/**
- * Represents the standard response returned after uploading a file to Ziqx Drive.
- */
-export interface UploadResponse {
-  /** Whether the upload was successful. */
-  success: boolean;
-
-  /** A descriptive message about the upload result. */
-  message: string;
-
-  /** The uploaded file's name (as stored on Ziqx Drive). */
-  filename?: string;
-
-  /** The drive ID that received the uploaded file. */
-  driveid?: string;
-}
+import { UploadResponse } from "./types";
 
 /**
  * ZDriveClient — Used **on the browser side** to upload files
@@ -145,7 +130,7 @@ export class ZDriveClient {
   async resizeImage(
     file: File,
     maxWidth: number = 1024,
-    quality: number = 0.8
+    quality: number = 0.8,
   ): Promise<File> {
     return new Promise((resolve, reject) => {
       try {
@@ -180,8 +165,8 @@ export class ZDriveClient {
             if (!ctx) {
               reject(
                 new Error(
-                  "Canvas 2D context is not supported in this environment."
-                )
+                  "Canvas 2D context is not supported in this environment.",
+                ),
               );
               return;
             }
@@ -202,7 +187,7 @@ export class ZDriveClient {
               (blob) => {
                 if (!blob) {
                   reject(
-                    new Error("Failed to generate compressed image blob.")
+                    new Error("Failed to generate compressed image blob."),
                   );
                   return;
                 }
@@ -215,13 +200,13 @@ export class ZDriveClient {
                 resolve(resizedFile);
               },
               "image/jpeg",
-              quality
+              quality,
             );
           } catch (canvasErr) {
             reject(
               new Error(
-                `Canvas rendering error: ${(canvasErr as Error).message}`
-              )
+                `Canvas rendering error: ${(canvasErr as Error).message}`,
+              ),
             );
           }
         };
@@ -229,8 +214,8 @@ export class ZDriveClient {
         img.onerror = () => {
           reject(
             new Error(
-              "Image decoding failed. The file may be corrupted or unsupported."
-            )
+              "Image decoding failed. The file may be corrupted or unsupported.",
+            ),
           );
         };
 

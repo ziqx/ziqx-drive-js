@@ -1,18 +1,5 @@
 import { SIGN_URL } from "./constants";
-
-/**
- * The structure of the API response returned by Ziqx Drive's sign-URL endpoint.
- */
-export interface SignUrlResponse {
-  /** Whether the request was successful */
-  success: boolean;
-
-  /** Message describing the response or error */
-  message: string;
-
-  /** Signed upload URL (present only when success is true) */
-  url?: string;
-}
+import { SignUrlResponse, UploadResponse } from "./types";
 
 /**
  * ZDrive class — handles generating signed URLs for uploading files to Ziqx Drive.
@@ -76,9 +63,15 @@ export class ZDrive {
    * }
    * ```
    */
-  async generatePutUrl(fileName: string): Promise<SignUrlResponse> {
+  async generatePutUrl(
+    fileName: string,
+    folder?: string,
+  ): Promise<SignUrlResponse> {
     // Construct the endpoint URL with the file name as a query parameter.
-    const url = `${SIGN_URL}?filename=${encodeURIComponent(fileName)}`;
+    let url = `${SIGN_URL}?filename=${encodeURIComponent(fileName)}`;
+    if (folder) {
+      url += `&folder=${encodeURIComponent(folder)}`;
+    }
 
     try {
       // Make the GET request to obtain a signed URL.
@@ -106,5 +99,19 @@ export class ZDrive {
         message: error.message || "Network error while generating signed URL",
       };
     }
+  }
+
+  async deleteFile(filename: string, folder?: string): Promise<UploadResponse> {
+    const signedUrl = await this.generatePutUrl(filename, folder);
+    if (!signedUrl.success || !signedUrl.url) {
+      throw new Error("Failed to generate signed URL for deletion");
+    }
+    const res = await fetch(signedUrl.url, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to delete file: ${res.statusText}`);
+    }
+    return res.json();
   }
 }
