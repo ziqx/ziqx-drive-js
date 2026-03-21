@@ -1,6 +1,6 @@
 {
   "name": "@ziqx/drive",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "SDK for Ziqx Drive upload and sign URL",
   "main": "./dist/index.ts",
   "module": "./dist/index.mjs",
@@ -11,7 +11,8 @@
     "url": "https://github.com/ziqx/ziqx-drive-js"
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "prepare": "npm run build"
   },
   "keywords": [
     "drive",
