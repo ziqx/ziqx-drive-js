@@ -67,6 +67,25 @@ export class ZDrive {
     fileName: string,
     folder?: string,
   ): Promise<SignUrlResponse> {
+    return this.generateSignedUrl(fileName, folder, "GET");
+  }
+
+  /**
+   * Signs a DELETE URL for the exact stored filename returned by an upload.
+   * Pass a drive-relative path, or a basename with its folder separately.
+   */
+  async generateDeleteUrl(
+    fileName: string,
+    folder?: string,
+  ): Promise<SignUrlResponse> {
+    return this.generateSignedUrl(fileName, folder, "DELETE");
+  }
+
+  private async generateSignedUrl(
+    fileName: string,
+    folder: string | undefined,
+    method: "GET" | "DELETE",
+  ): Promise<SignUrlResponse> {
     // Construct the endpoint URL with the file name as a query parameter.
     let url = `${SIGN_URL}?filename=${encodeURIComponent(fileName)}`;
     if (folder) {
@@ -74,9 +93,9 @@ export class ZDrive {
     }
 
     try {
-      // Make the GET request to obtain a signed URL.
+      // Use the HTTP method to select upload or delete signing.
       const res = await fetch(url, {
-        method: "GET",
+        method,
         headers: {
           "x-drive-key": this.driveKey,
           "x-drive-secret": this.driveSecret,
@@ -101,8 +120,9 @@ export class ZDrive {
     }
   }
 
+  /** Deletes the exact stored filename returned by the upload response. */
   async deleteFile(filename: string, folder?: string): Promise<UploadResponse> {
-    const signedUrl = await this.generatePutUrl(filename, folder);
+    const signedUrl = await this.generateDeleteUrl(filename, folder);
     if (!signedUrl.success || !signedUrl.url) {
       throw new Error("Failed to generate signed URL for deletion");
     }

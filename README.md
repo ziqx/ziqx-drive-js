@@ -48,8 +48,9 @@ async function generateSignedUrl() {
     console.error("❌ Error generating URL:", signed.message);
   }
 
-  // Delete a file
-  const deleted = await drive.deleteFile("example.jpg", "vacation/2024");
+  // Delete using the exact stored filename returned by the upload response.
+  // Uploads add a unique suffix; the original name ("example.jpg") is not the stored name.
+  const deleted = await drive.deleteFile("example-a1b2c3d4.jpg", "vacation/2024");
   console.log("Deleted:", deleted);
 }
 
@@ -106,7 +107,17 @@ const resizedImage = await client.resizeImage(file);
 | Method                                              | Description                       | Parameters                                    | Returns                    |
 | --------------------------------------------------- | --------------------------------- | --------------------------------------------- | -------------------------- |
 | `generatePutUrl(fileName: string, folder?: string)` | Generates a signed URL for a file | `fileName`: Name<br>`folder`: Path (Optional) | `Promise<SignUrlResponse>` |
+| `generateDeleteUrl(fileName: string, folder?: string)` | Signs deletion of an existing file | `fileName`: Stored name or relative path<br>`folder`: Path (Optional) | `Promise<SignUrlResponse>` |
 | `deleteFile(fileName: string, folder?: string)`     | Deletes a file from Ziqx Drive    | `fileName`: Name<br>`folder`: Path (Optional) | `Promise<UploadResponse>`  |
+
+For deletion, pass the upload response's `filename` directly (it already includes
+the folder), or pass the stored basename and folder separately. For example,
+`drive.deleteFile("vacation/2024/example-a1b2c3d4.jpg")` targets the same file as
+the example above. Do not pass the CDN URL or the original upload name.
+
+The SDK requests upload signing with `GET /api/drive/sign-url` and delete signing
+with `DELETE /api/drive/sign-url`. Both accept `filename` and an optional `folder`;
+the operation is selected by the HTTP method.
 
 ---
 

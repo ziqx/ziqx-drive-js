@@ -12,6 +12,7 @@
   },
   "scripts": {
     "build": "tsup",
+    "test": "npm run build && node --test test/*.test.cjs",
     "prepare": "npm run build"
   },
   "keywords": [
