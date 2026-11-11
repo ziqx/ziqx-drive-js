@@ -36,7 +36,7 @@ yarn add @ziqx/drive
 import { ZDrive } from "@ziqx/drive";
 
 async function generateSignedUrl() {
-  // Initialize with your Drive credentials
+  // Drive key and secret from Ziqx Developers → your app → Drive.
   const drive = new ZDrive("your-drive-key", "your-drive-secret");
 
   // Generate signed URL for a file (can specify an optional folder)
@@ -115,9 +115,27 @@ the folder), or pass the stored basename and folder separately. For example,
 `drive.deleteFile("vacation/2024/example-a1b2c3d4.jpg")` targets the same file as
 the example above. Do not pass the CDN URL or the original upload name.
 
-The SDK requests upload signing with `GET /api/drive/sign-url` and delete signing
-with `DELETE /api/drive/sign-url`. Both accept `filename` and an optional `folder`;
-the operation is selected by the HTTP method.
+### Endpoints
+
+- **Uploads** are signed by the Ziqx Developers API: `GET https://api.ziqx.net/v1/drive/sign-url`.
+  If that API doesn't know the drive yet (a drive created in core before the
+  move to Ziqx Developers), the SDK retries once on core's original route.
+- **Deletes** are signed by core: `DELETE https://ziqx.cc/api/drive/sign-url`.
+
+Both take `x-drive-key` / `x-drive-secret` headers and `filename` plus an optional
+`folder`. Upload names are cleaned first (letters, numbers, spaces, dots, dashes
+and underscores; anything else becomes a dash); delete names are sent exactly.
+Failed signing returns `{ success: false, message }` with the server's reason,
+for example `"Invalid drive key or secret"` or `"Too many signing requests"`.
+
+### Local development
+
+```ts
+const drive = new ZDrive(key, secret, {
+  apiUrl: "http://127.0.0.1:8080", // local Ziqx Developers backend
+  coreUrl: "http://localhost:3000", // local core-web
+});
+```
 
 ---
 

@@ -12,7 +12,6 @@ export interface SignUrlResponse {
   url?: string;
 }
 
-
 /**
  * Represents the standard response returned after uploading a file to Ziqx Drive.
  */
@@ -28,4 +27,18 @@ export interface UploadResponse {
 
   /** The drive ID that received the uploaded file. */
   driveid?: string;
+}
+
+/** Optional settings for {@link ZDrive}. */
+export interface ZDriveOptions {
+  /**
+   * Ziqx Developers API host used to sign uploads.
+   * Defaults to `https://api.ziqx.net`; use `http://127.0.0.1:8080` locally.
+   */
+  apiUrl?: string;
+  /**
+   * Ziqx core host, used to sign deletes and as a fallback for drives the
+   * Developers API doesn't know yet. Defaults to `https://ziqx.cc`.
+   */
+  coreUrl?: string;
 }

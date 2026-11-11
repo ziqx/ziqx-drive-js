@@ -1,5 +1,19 @@
-import { SIGN_URL } from "./constants";
-import { SignUrlResponse, UploadResponse } from "./types";
+import { DEFAULT_API_URL, DEFAULT_CORE_URL } from "./constants";
+import { SignUrlResponse, UploadResponse, ZDriveOptions } from "./types";
+
+/**
+ * Upload names may contain letters, numbers, spaces, dots, dashes and
+ * underscores, starting with a letter or number. Anything else becomes a dash
+ * (the stored name is cleaned further and gets a unique suffix).
+ */
+export function cleanUploadName(name: string): string {
+  const cleaned = name
+    .normalize("NFKD")
+    .replace(/[^A-Za-z0-9._ -]/g, "-")
+    .replace(/^[^A-Za-z0-9]+/, "")
+    .slice(0, 200);
+  return cleaned || "file";
+}
 
 /**
  * ZDrive class — handles generating signed URLs for uploading files to Ziqx Drive.
@@ -29,11 +43,18 @@ export class ZDrive {
   /** Your Ziqx Drive Secret */
   private driveSecret: string;
 
+  /** Upload signing on the Ziqx Developers API. */
+  private signUrl: string;
+
+  /** Core's signing route: deletes, and the upload fallback. */
+  private legacySignUrl: string;
+
   /**
    * Creates a new instance of ZDrive with your Drive credentials.
    *
    * @param driveKey - The unique key associated with your Ziqx Drive account.
    * @param driveSecret - The secret token for authenticating your requests.
+   * @param options - (Optional) `apiUrl` / `coreUrl` overrides, e.g. for local development.
    *
    * ---
    * **Example:**
@@ -41,9 +62,13 @@ export class ZDrive {
    * const drive = new ZDrive("your-drive-key", "your-drive-secret");
    * ```
    */
-  constructor(driveKey: string, driveSecret: string) {
+  constructor(driveKey: string, driveSecret: string, options: ZDriveOptions = {}) {
     this.driveKey = driveKey;
     this.driveSecret = driveSecret;
+    const api = new URL(options.apiUrl ?? DEFAULT_API_URL).origin;
+    const core = new URL(options.coreUrl ?? DEFAULT_CORE_URL).origin;
+    this.signUrl = `${api}/v1/drive/sign-url`;
+    this.legacySignUrl = `${core}/api/drive/sign-url`;
   }
 
   /**
@@ -67,7 +92,15 @@ export class ZDrive {
     fileName: string,
     folder?: string,
   ): Promise<SignUrlResponse> {
-    return this.generateSignedUrl(fileName, folder, "GET");
+    const name = cleanUploadName(fileName);
+    const signed = await this.request(this.signUrl, name, folder, "GET");
+    // Drives created in core before the move to Ziqx Developers may only be
+    // known to core until the import runs; core still signs those.
+    if (signed.status === 401 || signed.status === 404) {
+      const legacy = await this.request(this.legacySignUrl, name, folder, "GET");
+      if (legacy.body.success) return legacy.body;
+    }
+    return signed.body;
   }
 
   /**
@@ -78,19 +111,20 @@ export class ZDrive {
     fileName: string,
     folder?: string,
   ): Promise<SignUrlResponse> {
-    return this.generateSignedUrl(fileName, folder, "DELETE");
+    // Only core signs deletes; it verifies the drive with Ziqx Developers.
+    return (await this.request(this.legacySignUrl, fileName, folder, "DELETE"))
+      .body;
   }
 
-  private async generateSignedUrl(
+  private async request(
+    endpoint: string,
     fileName: string,
     folder: string | undefined,
     method: "GET" | "DELETE",
-  ): Promise<SignUrlResponse> {
-    // Construct the endpoint URL with the file name as a query parameter.
-    let url = `${SIGN_URL}?filename=${encodeURIComponent(fileName)}`;
-    if (folder) {
-      url += `&folder=${encodeURIComponent(folder)}`;
-    }
+  ): Promise<{ status: number; body: SignUrlResponse }> {
+    const query = new URLSearchParams({ filename: fileName });
+    if (folder) query.set("folder", folder);
+    const url = `${endpoint}?${query}`;
 
     try {
       // Use the HTTP method to select upload or delete signing.
@@ -103,19 +137,31 @@ export class ZDrive {
         },
       });
 
-      // Handle non-OK HTTP responses (e.g., 400, 403, 500)
-      if (!res.ok) {
-        throw new Error(`Failed to fetch signed URL: ${res.statusText}`);
+      const data = (await res.json().catch(() => null)) as
+        | SignUrlResponse
+        | null;
+      if (!res.ok || !data) {
+        // Keep the server's reason, e.g. "Invalid drive key or secret".
+        return {
+          status: res.status,
+          body: {
+            success: false,
+            message:
+              data?.message ||
+              `Failed to fetch signed URL: ${res.statusText || res.status}`,
+          },
+        };
       }
-
-      // Parse the JSON response into the expected structure.
-      const data = (await res.json()) as SignUrlResponse;
-      return data;
+      return { status: res.status, body: data };
     } catch (error: any) {
       // Return a normalized response structure on network or fetch errors.
       return {
-        success: false,
-        message: error.message || "Network error while generating signed URL",
+        status: 0,
+        body: {
+          success: false,
+          message:
+            error?.message || "Network error while generating signed URL",
+        },
       };
     }
   }

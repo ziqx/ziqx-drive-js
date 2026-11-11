@@ -32,9 +32,12 @@ To allow a client to upload a file directly to Ziqx Drive, you must first genera
 
 #### API Reference: `ZDrive`
 
-- `constructor(driveKey: string, driveSecret: string)`
-- `generatePutUrl(fileName: string, folder?: string): Promise<SignUrlResponse>`
-- `deleteFile(fileName: string, folder?: string): Promise<any>`
+- `constructor(driveKey: string, driveSecret: string, options?: { apiUrl?: string; coreUrl?: string })`
+- `generatePutUrl(fileName: string, folder?: string): Promise<SignUrlResponse>` — signed by the Ziqx Developers API (`https://api.ziqx.net/v1/drive/sign-url`), falling back to core for drives it doesn't know yet.
+- `generateDeleteUrl(fileName: string, folder?: string): Promise<SignUrlResponse>` — signed by core (`https://ziqx.cc/api/drive/sign-url`).
+- `deleteFile(fileName: string, folder?: string): Promise<UploadResponse>` — pass the stored `filename` from the upload response, not the original name.
+
+The drive key and secret come from Ziqx Developers → app → Drive. For local development pass `{ apiUrl: "http://127.0.0.1:8080", coreUrl: "http://localhost:3000" }`.
 
 #### Logic Flow
 
